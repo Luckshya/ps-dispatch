@@ -2,12 +2,50 @@ PlayerData = {}
 PlayerJob = {}
 isLoggedIn = true
 
+inHuntingZone = false
+inNoDispatchZone = false
 local blips = {}
+local radius2 = {}
+Waypoint = nil
 
 -- Debugging and testing dispatch alerts - Uncomment to use. 
 --RegisterCommand('testdispatch',function ()
 --    TriggerEvent('')
 --end)
+
+-- Create Hunting Zone, Code Executes as a Chunk when Scipt is Loaded and Doesn't need to be an Asynchronous Thread --
+
+if Config.Locations['hunting'][1] then
+	for _, hunting in pairs(Config.Locations["hunting"]) do
+		local huntingzone = CircleZone:Create(vector3(hunting.coords.x, hunting.coords.y, hunting.coords.z), hunting.radius, {
+			name = Config.Locations["hunting"].label,
+			useZ = true,
+			debugPoly = false
+		})
+
+		huntingzone:onPlayerInOut(function(isPointInside)
+			inHuntingZone = isPointInside
+		end)
+	end
+end
+
+-- Create No Dispatch Zone --
+
+if Config.Locations['NoDispatch'][1] then
+	for _, nodispatch in pairs(Config.Locations["NoDispatch"]) do
+		local nodispatchzone = BoxZone:Create(vector3(nodispatch.coords.x, nodispatch.coords.y, nodispatch.coords.z), nodispatch.length, nodispatch.width, {
+			name = Config.Locations["NoDispatch"].label,
+			heading = nodispatch.heading,
+			minZ = nodispatch.minZ,
+			maxZ = nodispatch.maxZ,
+			debugPoly = false
+		})
+
+		nodispatchzone:onPlayerInOut(function(isPointInside)
+			inNoDispatchZone = isPointInside
+		end)
+	end
+end
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -16,6 +54,15 @@ function _U(entry)
 end
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+function RandomNum(min, max)
+  math.randomseed(GetGameTimer())
+  local num = math.random() * (max - min) + min
+  if num % 1 >= 0.5 and math.ceil(num) <= max then
+    return math.ceil(num)
+  end
+	return math.floor(num)
+end
 
 function getSpeed() return speedlimit end
 function getStreet() return currentStreetName end
@@ -31,11 +78,7 @@ function refreshPlayerWhitelisted()
 	if not PlayerData then return false end
 	if not PlayerData.job then return false end
 	if Config.Debug then return true end
-	for k,v in ipairs({'police'}) do
-		if v == PlayerData.job.name then
-			return true
-		end
-	end
+	if Config.AuthorizedJobs.FirstResponder.Check() then return true end
 	return false
 end
 
@@ -85,7 +128,7 @@ function zoneChance(type, zoneMod, street)
 	end
 	zoneMod = zoneMod / (nearbyPeds / 3)
 	zoneMod = (math.ceil(zoneMod+0.5))
-	local sum = math.random(1, zoneMod)
+	local sum = RandomNum(1, zoneMod)
 	local chance = string.format('%.2f',(1 / zoneMod) * 100)..'%'
 
 	if sum > 1 then
@@ -135,25 +178,16 @@ function GetPedGender()
 end
 
 function getCardinalDirectionFromHeading()
-    local heading = GetEntityHeading(PlayerPedId())
-    if heading >= 315 or heading < 45 then return "North Bound"
-    elseif heading >= 45 and heading < 135 then return "West Bound"
-    elseif heading >=135 and heading < 225 then return "South Bound"
-    elseif heading >= 225 and heading < 315 then return "East Bound" end
-end
-
-function IsPoliceJob(job)
-    for k, v in pairs(Config.PoliceJob) do
-        if job == v then
-            return true
-        end
-    end
-    return false
+	local heading = GetEntityHeading(PlayerPedId())
+	if heading >= 315 or heading < 45 then return "North Bound"
+	elseif heading >= 45 and heading < 135 then return "West Bound"
+	elseif heading >=135 and heading < 225 then return "South Bound"
+	elseif heading >= 225 and heading < 315 then return "East Bound" end
 end
 
 local function IsValidJob(jobList)
-	for k, v in pairs(jobList) do
-		if v == PlayerJob.name then
+	for i = 1, #jobList do
+		if Config.AuthorizedJobs[jobList[i]] and Config.AuthorizedJobs[jobList[i]].Check() or PlayerJob.name == jobList[i] then 
 			return true
 		end
 	end
@@ -172,12 +206,11 @@ end
 
 local disableNotis, disableNotifSounds = false, false
 
--- @TODO notify
 RegisterNetEvent('dispatch:manageNotifs', function(sentSetting)
-    local wantedSetting = tostring(sentSetting)
-    if wantedSetting == "on" then
-        disableNotis = false
-        disableNotifSounds = false
+	local wantedSetting = tostring(sentSetting)
+	if wantedSetting == "on" then
+		disableNotis = false
+		disableNotifSounds = false
         Functions[Config.Core].Notify("Dispatch enabled", "success")
     elseif wantedSetting == "off" then
         disableNotis = true
@@ -194,34 +227,53 @@ RegisterNetEvent('dispatch:manageNotifs', function(sentSetting)
 end)
 
 RegisterNetEvent('dispatch:clNotify', function(sNotificationData, sNotificationId, sender)
-    if sNotificationData ~= nil and isLoggedIn then
-		if IsValidJob(sNotificationData['job']) and CheckOnDuty() then
-            if not disableNotis then
+	if sNotificationData ~= nil and isLoggedIn then
+	if IsValidJob(sNotificationData['job']) and CheckOnDuty() then
+			if not disableNotis then
 				if sNotificationData.origin ~= nil then
 					SendNUIMessage({
 						update = "newCall",
 						callID = sNotificationId,
 						data = sNotificationData,
 						timer = 5000,
-						isPolice = IsPoliceJob(PlayerJob.name)
+						isPolice = Config.AuthorizedJobs.LEO.Check()
 					})
+					notifyID = sNotificationId
+					dispatchMessage = sNotificationData.dispatchMessage
+					Waypoint = vector2(sNotificationData.origin.x, sNotificationData.origin.y)
+					Wait(5000)
+					Waypoint = nil
 				end
 			end
-        end
-    end
+		end
+	end
 end)
+
+RegisterCommand('setdispatchgps', function()
+	if Waypoint then 
+		SetWaypointOff() 
+		SetNewWaypoint(Waypoint.x, Waypoint.y)
+		TriggerServerEvent('mdt:server:callAttach', notifyID)
+		Functions[Config.Core].Notify('Attached to call  [#'..notifyID .. '] ' ..dispatchMessage..'.', "success")
+	end
+end, false)
+
+RegisterKeyMapping('setdispatchgps', 'Set Waypoint', 'keyboard', Config.RespondsKey)
+
 
 RegisterNetEvent("ps-dispatch:client:AddCallBlip", function(coords, data, blipId)
 	if IsValidJob(data.recipientList) and CheckOnDuty() then
-		PlaySound(-1, data.sound, data.sound2, 0, 0, 1)
-		TriggerServerEvent("InteractSound_SV:PlayOnSource", data.sound, 0.25) -- For Custom Sounds
+		if not disableNotifSounds then
+			PlaySound(-1, data.sound, data.sound2, 0, 0, 1)
+			TriggerServerEvent("InteractSound_SV:PlayOnSource", data.sound, 0.25) -- For Custom Sounds
+		end
 		CreateThread(function()
 			local alpha = 255
 			local blip = nil
 			local radius = nil
 			local radiusAlpha = 128
 			local sprite, colour, scale = 161, 84, 1.0
-			local randomoffset = math.random(1,100)
+			local randomoffset = RandomNum(1,100)
 			if data.blipSprite then sprite = data.blipSprite end
 			if data.blipColour then colour = data.blipColour end
 			if data.blipScale then scale = data.blipScale end
@@ -229,26 +281,31 @@ RegisterNetEvent("ps-dispatch:client:AddCallBlip", function(coords, data, blipId
 			
 			if data.offset == "true" then
 				if randomoffset <= 25 then
-					radius = AddBlipForRadius(coords.x + math.random(Config.MinOffset, Config.MaxOffset), coords.y + math.random(Config.MinOffset, Config.MaxOffset), coords.z, data.radius)
-					blip = AddBlipForCoord(coords.x + math.random(Config.MinOffset, Config.MaxOffset), coords.y + math.random(Config.MinOffset, Config.MaxOffset), coords.z)
+					radius = AddBlipForRadius(coords.x + RandomNum(Config.MinOffset, Config.MaxOffset), coords.y + RandomNum(Config.MinOffset, Config.MaxOffset), coords.z, data.radius)
+					blip = AddBlipForCoord(coords.x + RandomNum(Config.MinOffset, Config.MaxOffset), coords.y + RandomNum(Config.MinOffset, Config.MaxOffset), coords.z)
 					blips[blipId] = blip
+					radius2[blipId] = radius
 				elseif randomoffset >= 26 and randomoffset <= 50 then
-					radius = AddBlipForRadius(coords.x - math.random(Config.MinOffset, Config.MaxOffset), coords.y + math.random(Config.MinOffset, Config.MaxOffset), coords.z, data.radius)
-					blip = AddBlipForCoord(coords.x - math.random(Config.MinOffset, Config.MaxOffset), coords.y + math.random(Config.MinOffset, Config.MaxOffset), coords.z)
+					radius = AddBlipForRadius(coords.x - RandomNum(Config.MinOffset, Config.MaxOffset), coords.y + RandomNum(Config.MinOffset, Config.MaxOffset), coords.z, data.radius)
+					blip = AddBlipForCoord(coords.x - RandomNum(Config.MinOffset, Config.MaxOffset), coords.y + RandomNum(Config.MinOffset, Config.MaxOffset), coords.z)
 					blips[blipId] = blip
+					radius2[blipId] = radius
 				elseif randomoffset >= 51 and randomoffset <= 74 then
-					radius = AddBlipForRadius(coords.x - math.random(Config.MinOffset, Config.MaxOffset), coords.y - math.random(Config.MinOffset, Config.MaxOffset), coords.z, data.radius)
-					blip = AddBlipForCoord(coords.x - math.random(Config.MinOffset, Config.MaxOffset), coords.y - math.random(Config.MinOffset, Config.MaxOffset), coords.z)
+					radius = AddBlipForRadius(coords.x - RandomNum(Config.MinOffset, Config.MaxOffset), coords.y - RandomNum(Config.MinOffset, Config.MaxOffset), coords.z, data.radius)
+					blip = AddBlipForCoord(coords.x - RandomNum(Config.MinOffset, Config.MaxOffset), coords.y - RandomNum(Config.MinOffset, Config.MaxOffset), coords.z)
 					blips[blipId] = blip
+					radius2[blipId] = radius
 				elseif randomoffset >= 75 and randomoffset <= 100 then
-					radius = AddBlipForRadius(coords.x + math.random(Config.MinOffset, Config.MaxOffset), coords.y - math.random(Config.MinOffset, Config.MaxOffset), coords.z, data.radius)
-					blip = AddBlipForCoord(coords.x + math.random(Config.MinOffset, Config.MaxOffset), coords.y - math.random(Config.MinOffset, Config.MaxOffset), coords.z)
+					radius = AddBlipForRadius(coords.x + RandomNum(Config.MinOffset, Config.MaxOffset), coords.y - RandomNum(Config.MinOffset, Config.MaxOffset), coords.z, data.radius)
+					blip = AddBlipForCoord(coords.x + RandomNum(Config.MinOffset, Config.MaxOffset), coords.y - RandomNum(Config.MinOffset, Config.MaxOffset), coords.z)
 					blips[blipId] = blip
+					radius2[blipId] = radius
 				end
 			elseif data.offset == "false" then
 				radius = AddBlipForRadius(coords.x, coords.y, coords.z, data.radius)
 				blip = AddBlipForCoord(coords.x, coords.y, coords.z)
 				blips[blipId] = blip
+				radius2[blipId] = radius
 			end
 			if data.blipflash == "true" then 
 				SetBlipFlashes(blip, true) 
@@ -282,18 +339,18 @@ RegisterNetEvent("ps-dispatch:client:AddCallBlip", function(coords, data, blipId
 end)
 
 RegisterNetEvent('dispatch:getCallResponse', function(message)
-    SendNUIMessage({
-        update = "newCall",
-        callID = math.random(1000, 9999),
-        data = {
-            dispatchCode = 'RSP',
-            priority = 1,
-            dispatchMessage = "Call Response",
-            information = message
-        },
-        timer = 10000,
-        isPolice = true
-    })
+	SendNUIMessage({
+		update = "newCall",
+		callID = RandomNum(1000, 9999),
+		data = {
+			dispatchCode = 'RSP',
+			priority = 1,
+			dispatchMessage = "Call Response",
+			information = message
+		},
+		timer = 10000,
+		isPolice = true
+	})
 end)
 
 RegisterNetEvent("ps-dispatch:client:Explosion", function(data)
@@ -302,10 +359,14 @@ end)
 
 RegisterNetEvent("ps-dispatch:client:removeCallBlip", function(blipId)
 	RemoveBlip(blips[blipId])
+	RemoveBlip(radius2[blipId])
 end)
 
 RegisterNetEvent("ps-dispatch:client:clearAllBlips", function()
 	for k, v in pairs(blips) do
+		RemoveBlip(v)
+	end
+	for k, v in pairs(radius2) do
 		RemoveBlip(v)
 	end
 	Functions[Config.Core].Notify('All dispatch blips cleared', "success")

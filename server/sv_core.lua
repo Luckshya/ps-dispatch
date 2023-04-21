@@ -9,6 +9,12 @@ Functions.QBCore = {}
 Functions.QBCore.GetPlayer = function(src)
     return Core.Functions.GetPlayer(src)
 end
+Functions.QBCore.GetPlayerData = function(Player)
+    return Player.PlayerData
+end
+Functions.QBCore.GetPlayerByCitizenId = function(citizenid)
+    return Core.Functions.GetPlayerByCitizenId(citizenid)
+end
 Functions.QBCore.GetName = function(player)
     return player.PlayerData.charinfo.firstname .. " " .. player.PlayerData.charinfo.lastname
 end
@@ -25,6 +31,14 @@ end
 Functions.ESX = {}
 Functions.ESX.GetPlayer = function(src)
     return Core.GetPlayerFromId(src)
+end
+Functions.ESX.GetPlayerData = function(player)
+    local job = player.getJob()
+    job.type = "unknown"
+    return { job = job }
+end
+Functions.ESX.GetPlayerByCitizenId = function(identifier)
+    return Core.GetPlayerFromIdentifier(identifier)
 end
 Functions.ESX.GetName = function(player)
     return player.getName()
