@@ -38,7 +38,12 @@ end
 -- ESX
 Functions.ESX = {}
 Functions.ESX.GetPlayerData = function()
-    return Core.PlayerData
+    local playerData = Core.PlayerData
+    if playerData and playerData.job then
+        playerData.job.type = "unknown"
+    end
+
+    return playerData
 end
 Functions.ESX.GetGender = function(playerData)
     return playerData.sex == "m" and 0 or 1
@@ -87,18 +92,43 @@ AddEventHandler('onResourceStart', function(resourceName)
     end
 end)
 
+function onPlayerLoaded()
+    -- Create Hunting Zone Blips --
+	if not Config.Locations['hunting'][1] then return end
+	for _, hunting in pairs(Config.Locations["hunting"]) do
+		local blip = AddBlipForCoord(hunting.coords.x, hunting.coords.y, hunting.coords.z)
+		local huntingradius = AddBlipForRadius(hunting.coords.x, hunting.coords.y, hunting.coords.z, hunting.radius)
+		SetBlipSprite(blip, 442)
+		SetBlipAsShortRange(blip, true)
+		SetBlipScale(blip, 0.8)
+		SetBlipColour(blip, 0)
+		SetBlipColour(huntingradius, 0)
+		SetBlipAlpha(huntingradius, 40)
+		BeginTextCommandSetBlipName("STRING")
+		AddTextComponentString(hunting.label)
+		EndTextCommandSetBlipName(blip)
+	end
+end
+
+function onPlayerUnload()
+    local blip = GetFirstBlipInfoId(442)
+  repeat RemoveBlip(blip); blip = GetNextBlipInfoId(442) until not DoesBlipExist(blip)
+end
+
 RegisterNetEvent("QBCore:Client:OnPlayerLoaded", function()
     isLoggedIn = true
     PlayerData = Functions[Config.Core].GetPlayerData()
     PlayerJob = PlayerData.job
+
+    onPlayerLoaded()
 end)
 
 RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
     PlayerData = {}
     isLoggedIn = false
     currentCallSign = ""
-    -- currentVehicle, inVehicle, currentlyArmed, currentWeapon = nil, false, false, `WEAPON_UNARMED`
-    -- removeHuntingZones()
+
+    onPlayerUnload()
 end)
 
 RegisterNetEvent("QBCore:Client:OnJobUpdate", function(JobInfo)
@@ -122,6 +152,7 @@ RegisterNetEvent('esx:playerLoaded', function(xPlayer)
     PlayerJob = xPlayer.job
 
     Functions.ESX.LoadPlayerName()
+    onPlayerLoaded()
 end)
 
 RegisterNetEvent('esx:onPlayerLogout', function()
@@ -129,6 +160,8 @@ RegisterNetEvent('esx:onPlayerLogout', function()
     Core.PlayerLoaded = false
     Core.PlayerData = {}
     isLoggedIn = false
+
+    onPlayerUnload()
 end)
 
 RegisterNetEvent('esx:setJob', function(job)

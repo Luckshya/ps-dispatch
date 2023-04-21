@@ -75,7 +75,7 @@ RegisterCommand('911', function(source, args, rawCommand)
         if not Functions[Config.Core].IsHandcuffed() then
             if HasPhone() then
                 PhoneCallAnim()
-                Wait(math.random(3,8) * 1000)
+                Wait(RandomNum(3,8) * 1000)
                 playAnim = false
                 local plyData = Functions[Config.Core].GetPlayerData()
                 local currentPos = GetEntityCoords(PlayerPedId())
@@ -128,7 +128,7 @@ RegisterCommand('911a', function(source, args, rawCommand)
         if not Functions[Config.Core].IsHandcuffed() then
             if HasPhone() then
                 PhoneCallAnim()
-                Wait(math.random(3,8) * 1000)
+                Wait(RandomNum(3,8) * 1000)
                 playAnim = false
                 local currentPos = GetEntityCoords(PlayerPedId())
                 local locationInfo = getStreetandZone(currentPos)
@@ -180,7 +180,7 @@ RegisterCommand('311', function(source, args, rawCommand)
         if not Functions[Config.Core].IsHandcuffed() then
             if HasPhone() then
                 PhoneCallAnim()
-                Wait(math.random(3,8) * 1000)
+                Wait(RandomNum(3,8) * 1000)
                 playAnim = false
                 local plyData = Functions[Config.Core].GetPlayerData()
 
@@ -235,7 +235,7 @@ RegisterCommand('311a', function(source, args, rawCommand)
         if not Functions[Config.Core].IsHandcuffed() then
             if HasPhone() then
                 PhoneCallAnim()
-                Wait(math.random(3,8) * 1000)
+                Wait(RandomNum(3,8) * 1000)
                 playAnim = false
                 local currentPos = GetEntityCoords(PlayerPedId())
                 local locationInfo = getStreetandZone(currentPos)
