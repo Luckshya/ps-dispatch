@@ -27,6 +27,9 @@ Functions.QBCore.RegisterCommand = function(name, help, args, argsReq, cb)
         cb(player, ...)
     end)
 end
+Functions.QBCore.Notify = function(src, msg, type, ...)
+    TriggerClientEvent('ox_lib:notify', src, { description = msg, position = 'top', type = type })
+end
 
 Functions.ESX = {}
 Functions.ESX.GetPlayer = function(src)
@@ -48,6 +51,9 @@ Functions.ESX.GetJob = function(player)
 end
 Functions.ESX.RegisterCommand = function(name, help, args, argsReq, cb)
     Core.RegisterCommand(name, 'user', cb, argsReq, {help = help, arguments = args})
+end
+Functions.ESX.Notify = function(src, msg, type, ...)
+    TriggerClientEvent('ox_lib:notify', src, { description = msg, position = 'top', type = type })
 end
 
 if Config.Core == "ESX" then
@@ -75,3 +81,5 @@ if Config.Core == "ESX" then
         cb(firstname, lastname)
     end)
 end
+
+Functions.Core = Functions[Config.Core]

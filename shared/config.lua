@@ -1,5 +1,10 @@
 Config = Config or {}
 
+Config.Core = "QBCore"
+Config.RecentCallsSize = 50
+Config.Cooldown911 = 60
+Config.Cooldown311 = 60
+
 Config.Debug = false -- Enables debug and send alerts when leo break the law.
 
 Config.RespondKeybind = 'E'
@@ -10,6 +15,16 @@ Config.OnDutyOnly = true -- Set true if only on duty players can see the alert
 Config.Jobs = { -- Job Types that can access the dispatch menu
     "leo",
     "ems"
+}
+
+-- only for ESX as there is no job type in ESX
+-- [job_name = job_type]
+Config.ESXJobTypeMap = {
+    police = "leo",
+    bcso = "leo",
+
+    ems = "ems",
+    bcso = "ems",
 }
 
 Config.DefaultAlertsDelay = 5 -- Delay between each default alert, prevent spamming

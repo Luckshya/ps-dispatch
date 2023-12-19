@@ -1,4 +1,3 @@
-QBCore = exports['qb-core']:GetCoreObject()
 PlayerData = {}
 inHuntingZone, inNoDispatchZone = false, false
 huntingzone, nodispatchzone = nil , nil
@@ -16,8 +15,8 @@ local function toggleUI(bool)
     SendNUIMessage({ action = "setVisible", data = bool })
 end
 
-local function setupDispatch()
-    PlayerData = QBCore.Functions.GetPlayerData()
+function setupDispatch()
+    PlayerData = Functions.Core.GetCachedPlayerData()
     local locales = lib.getLocales()
 
     Wait(1000)
@@ -36,6 +35,7 @@ end
 ---@param data string | table -- The player job or an array of jobs to check against
 ---@return boolean -- Returns true if the job is valid
 local function isJobValid(data)
+    PlayerData = Functions.Core.GetCachedPlayerData()
     local jobType = PlayerData.job.type
 
     if type(data) == "string" then
@@ -48,6 +48,7 @@ local function isJobValid(data)
 end
 
 local function openMenu()
+    PlayerData = Functions.Core.GetCachedPlayerData()
     if not isJobValid(PlayerData.job.type) then return end
 
     local data = lib.callback.await('ps-dispatch:callback:getCalls', false)
@@ -60,6 +61,7 @@ local function openMenu()
 end
 
 local function setWaypoint()
+    PlayerData = Functions.Core.GetCachedPlayerData()
     if not isJobValid(PlayerData.job.type) then return end
 
     local data = lib.callback.await('ps-dispatch:callback:getLatestDispatch', false)
@@ -201,11 +203,11 @@ function createZones()
     end
 end
 
-local function removeZones()
+function removeZones()
     -- Hunting Zone --
-    huntingzone:remove()
+    if huntingzone then huntingzone:remove() end
     -- No Dispatch Zone --
-    nodispatchzone:remove()
+    if nodispatchzone then nodispatchzone:remove() end
 end
 
 -- Events
@@ -225,6 +227,7 @@ RegisterNetEvent('ps-dispatch:client:notify', function(data, source)
 end)
 
 RegisterNetEvent('ps-dispatch:client:openMenu', function(data)
+    PlayerData = Functions.Core.GetCachedPlayerData()
     if not isJobValid(PlayerData.job.type) then return end
 
     if #data == 0 then
@@ -238,12 +241,13 @@ end)
 -- EventHandlers
 RegisterNetEvent("QBCore:Client:OnJobUpdate", setupDispatch)
 
-AddEventHandler('QBCore:Client:OnPlayerLoaded', setupDispatch)
+RegisterNetEvent('QBCore:Client:OnPlayerLoaded', setupDispatch)
 
-AddEventHandler('QBCore:Client:OnPlayerUnload', removeZones)
+RegisterNetEvent('QBCore:Client:OnPlayerUnload', removeZones)
 
 AddEventHandler('onResourceStart', function(resourceName)
     if resourceName ~= GetCurrentResourceName() then return end
+    if Config.Core == "ESX" then Functions.ESX.LoadPlayerName() end
     setupDispatch()
 end)
 
@@ -253,31 +257,37 @@ AddEventHandler('onResourceStop', function(resourceName)
 end)
 
 -- NUICallbacks
-RegisterNUICallback("hideUI", function()
+RegisterNUICallback("hideUI", function(_, cb)
     toggleUI(false)
+    cb('success')
 end)
 
 RegisterNUICallback("attachUnit", function(data, cb)
+    PlayerData = Functions.Core.GetCachedPlayerData()
     TriggerServerEvent('ps-dispatch:server:attach', data.id, PlayerData)
     SetNewWaypoint(data.coords.x, data.coords.y)
-
+    cb('success')
 end)
 
 RegisterNUICallback("detachUnit", function(data, cb)
+    PlayerData = Functions.Core.GetCachedPlayerData()
     TriggerServerEvent('ps-dispatch:server:detach', data.id, PlayerData)
     DeleteWaypoint()
+    cb('success')
 end)
 
 RegisterNUICallback("toggleMute", function(data, cb)
     local muteStatus = data.boolean and locale('muted') or locale('unmuted')
     lib.notify({ description = locale('alerts') .. muteStatus, position = 'top', type = 'warning' })
     alertsMuted = data.boolean
+    cb('success')
 end)
 
 RegisterNUICallback("toggleAlerts", function(data, cb)
     local muteStatus = data.boolean and locale('disabled') or locale('enabled')
     lib.notify({ description = locale('alerts') .. muteStatus, position = 'top', type = 'warning' })
     alertsDisabled = data.boolean
+    cb('success')
 end)
 
 RegisterNUICallback("clearBlips", function(data, cb)
@@ -288,12 +298,14 @@ RegisterNUICallback("clearBlips", function(data, cb)
     for k, v in pairs(radius2) do
         RemoveBlip(v)
     end
+    cb('success')
 end)
 
 RegisterNUICallback("refreshAlerts", function(data, cb)
     lib.notify({ description = locale('alerts_refreshed'), position = 'top', type = 'success' })
     local data = lib.callback.await('ps-dispatch:callback:getCalls', false)
     SendNUIMessage({ action = 'setDispatchs', data = data, })
+    cb('success')
 end)
 
 -- Keybind

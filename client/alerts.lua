@@ -393,6 +393,7 @@ exports('DeceasedPerson', DeceasedPerson)
 
 local function OfficerDown()
     local coords = GetEntityCoords(cache.ped)
+    local plyData = Functions.Core.GetPlayerData()
 
     local dispatchData = {
         message = locale('officerdown'),
@@ -403,8 +404,8 @@ local function OfficerDown()
         coords = coords,
         gender = GetPlayerGender(),
         street = GetStreetAndZone(coords),
-        name = PlayerData.charinfo.firstname .. " " .. PlayerData.charinfo.lastname,
-        callsign = PlayerData.metadata["callsign"],
+        name = Functions.Core.GetFormattedName(plyData),
+        callsign = Functions.Core.GetCallSign(plyData),
         jobs = { 'ems', 'leo' }
     }
 
@@ -416,6 +417,7 @@ RegisterNetEvent("ps-dispatch:client:officerdown", function() OfficerDown() end)
 
 local function OfficerInDistress()
     local coords = GetEntityCoords(cache.ped)
+    local plyData = Functions.Core.GetPlayerData()
 
     local dispatchData = {
         message = locale('officerdistress'),
@@ -426,8 +428,8 @@ local function OfficerInDistress()
         coords = coords,
         gender = GetPlayerGender(),
         street = GetStreetAndZone(coords),
-        name = PlayerData.charinfo.firstname .. " " .. PlayerData.charinfo.lastname,
-        callsign = PlayerData.metadata["callsign"],
+        name = Functions.Core.GetFormattedName(plyData),
+        callsign = Functions.Core.GetCallSign(plyData),
         jobs = { 'ems', 'leo' }
     }
 
@@ -437,6 +439,7 @@ exports('OfficerInDistress', OfficerInDistress)
 
 local function EmsDown()
     local coords = GetEntityCoords(cache.ped)
+    local plyData = Functions.Core.GetPlayerData()
 
     local dispatchData = {
         message = locale('emsdown'),
@@ -447,8 +450,8 @@ local function EmsDown()
         coords = coords,
         gender = GetPlayerGender(),
         street = GetStreetAndZone(coords),
-        name = PlayerData.charinfo.firstname .. " " .. PlayerData.charinfo.lastname,
-        callsign = PlayerData.metadata["callsign"],
+        name = Functions.Core.GetFormattedName(plyData),
+        callsign = Functions.Core.GetCallSign(plyData),
         jobs = { 'ems', 'leo' }
     }
 
@@ -524,6 +527,7 @@ exports('CustomAlert', CustomAlert)
 
 local function PhoneCall(message, anonymous, job)
     local coords = GetEntityCoords(cache.ped)
+    local plyData = Functions.Core.GetPlayerData()
 
     if IsCallAllowed(message) then
         PhoneAnimation()
@@ -535,8 +539,8 @@ local function PhoneCall(message, anonymous, job)
             icon = 'fas fa-phone',
             priority = 2,
             coords = coords,
-            name = anonymous and locale('anon') or (PlayerData.charinfo.firstname .. " " .. PlayerData.charinfo.lastname),
-            number = anonymous and locale('hidden_number') or PlayerData.charinfo.phone,
+            name = anonymous and locale('anon') or (Functions.Core.GetFormattedName(plyData)),
+            number = anonymous and locale('hidden_number') or Functions.Core.GetPhoneNumber(plyData),
             information = message,
             street = GetStreetAndZone(coords),
             jobs = job

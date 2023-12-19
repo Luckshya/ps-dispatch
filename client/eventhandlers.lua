@@ -31,6 +31,8 @@ AddEventHandler('CEventGunShot', function(witnesses, ped)
     if IsPedCurrentWeaponSilenced(cache.ped) then return end
     if inNoDispatchZone then return end
 
+    PlayerData = Functions.Core.GetCachedPlayerData()
+
     WaitTimer('Shooting', function()
         if cache.ped ~= ped then return end
 
@@ -84,6 +86,8 @@ AddEventHandler('gameEventTriggered', function(name, args)
     if name ~= 'CEventNetworkEntityDamage' then return end
     local victim = args[1]
     local isDead = args[6] == 1
+    PlayerData = Functions.Core.GetCachedPlayerData()
+
     WaitTimer('PlayerDowned', function()
         if not victim or victim ~= cache.ped then return end
         if not isDead then return end

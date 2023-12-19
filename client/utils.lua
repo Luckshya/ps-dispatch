@@ -13,17 +13,17 @@ function GetPlayerHeading()
 end
 
 function GetPlayerGender()
-    return PlayerData.charinfo.gender == 1 and 'Female' or 'Male'
+    return Functions.Core.GetGender(PlayerData)
 end
 
 function GetIsHandcuffed()
-    return QBCore.Functions.GetPlayerData()?.metadata?.ishandcuffed
+    return Functions.Core.IsHandcuffed()
 end
 
 function IsOnDuty()
-    PlayerData = QBCore.Functions.GetPlayerData()
+    PlayerData = Functions.Core.GetPlayerData()
     if Config.OnDutyOnly then
-        if PlayerData.job.onduty then
+        if Functions.Core.GetOnDuty(PlayerData) then
             return true
         else
             return false
@@ -34,12 +34,7 @@ end
 
 ---@return boolean
 local function HasPhone()
-    for _, item in ipairs(Config.PhoneItems) do
-        if QBCore.Functions.HasItem(item) then
-            return true
-        end
-    end
-    return false
+    return Functions.Core.HasPhone()
 end
 
 ---@param coords table

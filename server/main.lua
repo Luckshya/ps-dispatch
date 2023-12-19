@@ -1,9 +1,13 @@
 local calls = {}
+local recentCalls = {}
 
 -- Functions
 exports('GetDispatchCalls', function()
     return calls
 end)
+
+function GetRecentDispatchCalls() return recentCalls end
+exports('GetRecentDispatchCalls', GetRecentDispatchCalls)
 
 -- Events
 RegisterServerEvent('ps-dispatch:server:notify', function(data)
@@ -12,6 +16,14 @@ RegisterServerEvent('ps-dispatch:server:notify', function(data)
     data.units = {}
     data.responses = {}
     calls[#calls + 1] = data
+
+    local recentSize = #recentCalls
+
+    if recentSize >= Config.RecentCallsSize then
+        table.remove(recentCalls, 1)
+    end
+
+    table.insert(recentCalls, data)
 
     TriggerClientEvent('ps-dispatch:client:notify', -1, data)
 end)
@@ -52,10 +64,19 @@ lib.addCommand('dispatch', {
     TriggerClientEvent("ps-dispatch:client:openMenu", source, calls)
 end)
 
+local last911Used = 0
 lib.addCommand('911', {
     help = 'Send a message to 911',
     params = { { name = 'message', type = 'string', help = '911 Message' }},
 }, function(source, args, raw)
+    local timeNow = os.time()
+
+    if timeNow - last911Used <= Config.Cooldown911 then
+        return Functions.Core.Notify(source, "Please wait before using it again", "error")
+    end
+
+    last911Used = timeNow
+
     local fullMessage = raw:sub(5)
     TriggerClientEvent('ps-dispatch:client:sendEmergencyMsg', source, fullMessage, "911", false)
 end)
@@ -63,14 +84,31 @@ lib.addCommand('911a', {
     help = 'Send an anonymous message to 911',
     params = { { name = 'message', type = 'string', help = '911 Message' }},
 }, function(source, args, raw)
+    local timeNow = os.time()
+
+    if timeNow - last911Used <= Config.Cooldown911 then
+        return Functions.Core.Notify(source, "Please wait before using it again", "error")
+    end
+
+    last911Used = timeNow
+
     local fullMessage = raw:sub(5)
     TriggerClientEvent('ps-dispatch:client:sendEmergencyMsg', source, fullMessage, "911", true)
 end)
 
+local last311Used = 0
 lib.addCommand('311', {
     help = 'Send a message to 311',
     params = { { name = 'message', type = 'string', help = '311 Message' }},
 }, function(source, args, raw)
+    local timeNow = os.time()
+
+    if timeNow - last311Used <= Config.Cooldown311 then
+        return Functions.Core.Notify(source, "Please wait before using it again", "error")
+    end
+
+    last311Used = timeNow
+
     local fullMessage = raw:sub(5)
     TriggerClientEvent('ps-dispatch:client:sendEmergencyMsg', source, fullMessage, "311", false)
 end)
@@ -79,6 +117,14 @@ lib.addCommand('311a', {
     help = 'Send an anonymous message to 311',
     params = { { name = 'message', type = 'string', help = '311 Message' }},
 }, function(source, args, raw)
+    local timeNow = os.time()
+
+    if timeNow - last311Used <= Config.Cooldown311 then
+        return Functions.Core.Notify(source, "Please wait before using it again", "error")
+    end
+
+    last311Used = timeNow
+
     local fullMessage = raw:sub(5)
     TriggerClientEvent('ps-dispatch:client:sendEmergencyMsg', source, fullMessage, "311", true)
 end)
