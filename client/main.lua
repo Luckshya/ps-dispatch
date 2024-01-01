@@ -16,7 +16,7 @@ local function toggleUI(bool)
 end
 
 function setupDispatch()
-    PlayerData = Functions.Core.GetCachedPlayerData()
+    PlayerData = Functions.Core.UpdateCachedPlayerData()
     local locales = lib.getLocales()
 
     Wait(1000)
@@ -28,6 +28,8 @@ function setupDispatch()
         data = {
             locales = locales,
             player = PlayerData,
+            keybind = Config.RespondKeybind,
+            maxCallList = Config.MaxCallList,
         }
     })
 end
@@ -35,7 +37,6 @@ end
 ---@param data string | table -- The player job or an array of jobs to check against
 ---@return boolean -- Returns true if the job is valid
 local function isJobValid(data)
-    PlayerData = Functions.Core.GetCachedPlayerData()
     local jobType = PlayerData.job.type
 
     if type(data) == "string" then
@@ -48,27 +49,25 @@ local function isJobValid(data)
 end
 
 local function openMenu()
-    PlayerData = Functions.Core.GetCachedPlayerData()
     if not isJobValid(PlayerData.job.type) then return end
 
-    local data = lib.callback.await('ps-dispatch:callback:getCalls', false)
-    if #data == 0 then
+    local calls = lib.callback.await('ps-dispatch:callback:getCalls', false)
+    if #calls == 0 then
         lib.notify({ description = locale('no_calls'), position = 'top', type = 'error' })
     else
+        SendNUIMessage({ action = 'setDispatchs', data = calls, })
         toggleUI(true)
-        SendNUIMessage({ action = 'setDispatchs', data = data, })
     end
 end
 
 local function setWaypoint()
-    PlayerData = Functions.Core.GetCachedPlayerData()
     if not isJobValid(PlayerData.job.type) then return end
 
     local data = lib.callback.await('ps-dispatch:callback:getLatestDispatch', false)
 
     if not data then return end
 
-    if not waypointCooldown then
+    if not waypointCooldown and lib.table.contains(data.jobs, PlayerData.job.type) then
         SetNewWaypoint(data.coords.x, data.coords.y)
         TriggerServerEvent('ps-dispatch:server:attach', data.id, PlayerData)
         lib.notify({ description = locale('waypoint_set'), position = 'top', type = 'success' })
@@ -86,11 +85,11 @@ local function randomOffset(baseX, baseY, offset)
     return randomX, randomY
 end
 
-local function createBlipData(coords, radius, sprite, color, scale, flashes)
+local function createBlipData(coords, radius, sprite, color, scale, flash)
     local blip = AddBlipForCoord(coords.x, coords.y, coords.z)
     local radiusBlip = AddBlipForRadius(coords.x, coords.y, coords.z, radius)
 
-    SetBlipFlashes(blip, flashes)
+    SetBlipFlashes(blip, flash)
     SetBlipSprite(blip, sprite or 161)
     SetBlipHighDetail(blip, true)
     SetBlipScale(blip, scale or 1.0)
@@ -109,17 +108,18 @@ local function createBlip(data, blipData)
     local sprite = blipData.sprite or blipData.alert.sprite or 161
     local color = blipData.color or blipData.alert.color or 84
     local scale = blipData.scale or blipData.alert.scale or 1.0
+    local flash = blipData.flash or false
     local alpha = 255
     local radiusAlpha = 128
     local blipWaitTime = ((blipData.length or blipData.alert.length) * 60000) / radiusAlpha
 
     if blipData.offset then
         local offsetX, offsetY = randomOffset(data.coords.x, data.coords.y, Config.MaxOffset)
-        blip, radius = createBlipData({ x = offsetX, y = offsetY, z = data.coords.z }, blipData.radius, sprite, color, scale, flashes)
+        blip, radius = createBlipData({ x = offsetX, y = offsetY, z = data.coords.z }, blipData.radius, sprite, color, scale, flash)
         blips[data.id] = blip
         radius2[data.id] = radius
     else
-        blip, radius = createBlipData(data.coords, blipData.radius, sprite, color, scale, flashes)
+        blip, radius = createBlipData(data.coords, blipData.radius, sprite, color, scale, flash)
         blips[data.id] = blip
         radius2[data.id] = radius
     end
@@ -210,24 +210,77 @@ function removeZones()
     if nodispatchzone then nodispatchzone:remove() end
 end
 
+-- Keybind
+local RespondToDispatch = lib.addKeybind({
+    name = 'RespondToDispatch',
+    description = 'Set waypoint to last call location',
+    defaultKey = Config.RespondKeybind,
+    onPressed = setWaypoint,
+})
+
+local OpenDispatchMenu = lib.addKeybind({
+    name = 'OpenDispatchMenu',
+    description = 'Open Dispatch Menu',
+    defaultKey = Config.OpenDispatchMenu,
+    onPressed = openMenu,
+})
+
 -- Events
+RegisterNetEvent('ps-dispatch:client:getCallResponse', function(message)
+	SendNUIMessage({
+		action = "newCall",
+		data = {
+            data = {
+                id = math.random(1000, 9999),
+                code = 'RSP',
+                priority = 2,
+                message = "Call Response",
+                information = message,
+            },
+            timer = 10000,
+		},
+	})
+end)
+
 RegisterNetEvent('ps-dispatch:client:notify', function(data, source)
+    local timer = Config.AlertTime * 1000
     if alertsDisabled then return end
     if not isJobValid(data.jobs) then return end
     if not IsOnDuty() then return end
+
+    timerCheck = true
+
     SendNUIMessage({
         action = 'newCall',
         data = {
             data = data,
-            timer = Config.AlertTime * 1000,
+            timer = timer,
         }
     })
 
     addBlip(data, Config.Blips[data.codeName] or data)
+
+    RespondToDispatch:disable(false)
+    OpenDispatchMenu:disable(true)
+
+    local startTime = GetGameTimer()
+    while timerCheck do
+        Wait(1000)
+
+        local currentTime = GetGameTimer()
+        local elapsed = currentTime - startTime
+
+        if elapsed >= timer then
+            break
+        end
+    end
+
+    timerCheck = false
+    OpenDispatchMenu:disable(false)
+    RespondToDispatch:disable(true)
 end)
 
 RegisterNetEvent('ps-dispatch:client:openMenu', function(data)
-    PlayerData = Functions.Core.GetCachedPlayerData()
     if not isJobValid(PlayerData.job.type) then return end
 
     if #data == 0 then
@@ -241,9 +294,9 @@ end)
 -- EventHandlers
 RegisterNetEvent("QBCore:Client:OnJobUpdate", setupDispatch)
 
-RegisterNetEvent('QBCore:Client:OnPlayerLoaded', setupDispatch)
+AddEventHandler('QBCore:Client:OnPlayerLoaded', setupDispatch)
 
-RegisterNetEvent('QBCore:Client:OnPlayerUnload', removeZones)
+AddEventHandler('QBCore:Client:OnPlayerUnload', removeZones)
 
 AddEventHandler('onResourceStart', function(resourceName)
     if resourceName ~= GetCurrentResourceName() then return end
@@ -259,35 +312,35 @@ end)
 -- NUICallbacks
 RegisterNUICallback("hideUI", function(_, cb)
     toggleUI(false)
-    cb('success')
+    cb("ok")
 end)
 
 RegisterNUICallback("attachUnit", function(data, cb)
-    PlayerData = Functions.Core.GetCachedPlayerData()
+    PlayerData = Functions.Core.UpdateCachedPlayerData()
     TriggerServerEvent('ps-dispatch:server:attach', data.id, PlayerData)
     SetNewWaypoint(data.coords.x, data.coords.y)
-    cb('success')
+    cb("ok")
 end)
 
 RegisterNUICallback("detachUnit", function(data, cb)
-    PlayerData = Functions.Core.GetCachedPlayerData()
+    PlayerData = Functions.Core.UpdateCachedPlayerData()
     TriggerServerEvent('ps-dispatch:server:detach', data.id, PlayerData)
     DeleteWaypoint()
-    cb('success')
+    cb("ok")
 end)
 
 RegisterNUICallback("toggleMute", function(data, cb)
     local muteStatus = data.boolean and locale('muted') or locale('unmuted')
     lib.notify({ description = locale('alerts') .. muteStatus, position = 'top', type = 'warning' })
     alertsMuted = data.boolean
-    cb('success')
+    cb("ok")
 end)
 
 RegisterNUICallback("toggleAlerts", function(data, cb)
     local muteStatus = data.boolean and locale('disabled') or locale('enabled')
     lib.notify({ description = locale('alerts') .. muteStatus, position = 'top', type = 'warning' })
     alertsDisabled = data.boolean
-    cb('success')
+    cb("ok")
 end)
 
 RegisterNUICallback("clearBlips", function(data, cb)
@@ -298,27 +351,17 @@ RegisterNUICallback("clearBlips", function(data, cb)
     for k, v in pairs(radius2) do
         RemoveBlip(v)
     end
-    cb('success')
+    cb("ok")
 end)
 
 RegisterNUICallback("refreshAlerts", function(data, cb)
     lib.notify({ description = locale('alerts_refreshed'), position = 'top', type = 'success' })
     local data = lib.callback.await('ps-dispatch:callback:getCalls', false)
     SendNUIMessage({ action = 'setDispatchs', data = data, })
-    cb('success')
+    cb("ok")
 end)
 
--- Keybind
-lib.addKeybind({
-    name = 'RespondToDispatch',
-    description = 'Set waypoint to last call location',
-    defaultKey = Config.RespondKeybind,
-    onPressed = setWaypoint,
-})
-
-lib.addKeybind({
-    name = 'OpenDispatchMenu',
-    description = 'Open Dispatch Menu',
-    defaultKey = Config.OpenDispatchMenu,
-    onPressed = openMenu,
-})
+RegisterNetEvent("ps-dispatch:client:removeCallBlip", function(blipId)
+	RemoveBlip(blips[blipId])
+	RemoveBlip(radius2[blipId])
+end)

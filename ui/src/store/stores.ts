@@ -1,15 +1,19 @@
-import { writable } from "svelte/store";
+import { writable, derived } from "svelte/store";
 
 export const VISIBILITY = writable<boolean>(false);
 export const BROWSER_MODE = writable<boolean>(false);
 export const RESOURCE_NAME = writable<string>("");
 
 export const PLAYER = writable<any>(null);
+export const MAX_CALL_LIST = writable<number>(null);
+export const RESPOND_KEYBIND = writable<string>("");
 
 export const DISPATCH_MUTED = writable<boolean>(false);
 export const DISPATCH_DISABLED = writable<boolean>(false);
 
 export const DISPATCH = writable<any[]>(null);
+
+export const IS_RIGHT_MARGIN = writable(true);
 
 export function removeDispatch(callID) {
   DISPATCH.update(dispatches => {
@@ -41,7 +45,7 @@ interface DISPATCHMENU_DATA {
   heading: string,
   jobs: any[],
 }
-  
+
 export const DISPATCH_MENU = writable<DISPATCHMENU_DATA[]>(null);
 export const DISPATCH_MENUS = writable<DISPATCHMENU_DATA>(null);
 
@@ -53,5 +57,22 @@ interface LOCALE_DATA {
   units: string,
   additionals: string,
 }
-  
+
 export const Locale = writable<LOCALE_DATA>(null);
+
+export const processedDispatchMenu = derived(
+  [DISPATCH_MENU, MAX_CALL_LIST, PLAYER],
+  ([$DISPATCH_MENU, $MAX_CALL_LIST, $PLAYER]) => {
+    if (!$DISPATCH_MENU || $MAX_CALL_LIST === null || !$PLAYER) {
+      // Handling null or undefined values
+      return [];
+    }
+
+    return $DISPATCH_MENU
+      .slice(-$MAX_CALL_LIST)
+      .filter(dispatch =>
+        dispatch.message && dispatch.jobs.includes($PLAYER.job.type)
+      )
+      .reverse();
+  }
+);

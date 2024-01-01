@@ -1,4 +1,3 @@
-
 local timer = {}
 
 ---@param name string -- The name of the timer
@@ -31,17 +30,15 @@ AddEventHandler('CEventGunShot', function(witnesses, ped)
     if IsPedCurrentWeaponSilenced(cache.ped) then return end
     if inNoDispatchZone then return end
 
-    PlayerData = Functions.Core.GetCachedPlayerData()
-
     WaitTimer('Shooting', function()
         if cache.ped ~= ped then return end
 
-        if PlayerData.job.type == 'leo' then 
+        if PlayerData.job.type == 'leo' then
             if not Config.Debug then
                 return
             end
         end
-        
+
         if inHuntingZone then
             exports['ps-dispatch']:Hunting()
             return
@@ -61,6 +58,7 @@ AddEventHandler('CEventShockingSeenMeleeAction', function(witnesses, ped)
     WaitTimer('Melee', function()
         if cache.ped ~= ped then return end
         if witnesses and not isPedAWitness(witnesses, ped) then return end
+        if not IsPedInMeleeCombat(ped) then return end
 
         exports['ps-dispatch']:Fight()
     end)
@@ -86,7 +84,6 @@ AddEventHandler('gameEventTriggered', function(name, args)
     if name ~= 'CEventNetworkEntityDamage' then return end
     local victim = args[1]
     local isDead = args[6] == 1
-    PlayerData = Functions.Core.GetCachedPlayerData()
 
     WaitTimer('PlayerDowned', function()
         if not victim or victim ~= cache.ped then return end

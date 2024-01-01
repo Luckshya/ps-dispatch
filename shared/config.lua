@@ -1,7 +1,6 @@
 Config = Config or {}
 
 Config.Core = "QBCore"
-Config.RecentCallsSize = 50
 Config.Cooldown911 = 60
 Config.Cooldown311 = 60
 
@@ -11,6 +10,7 @@ Config.RespondKeybind = 'E'
 Config.OpenDispatchMenu = 'O'
 Config.AlertTime = 5     -- How many seconds you want the alert to stay on screen
 
+Config.MaxCallList = 25 -- maximum dispatch calls in dispatch list
 Config.OnDutyOnly = true -- Set true if only on duty players can see the alert
 Config.Jobs = { -- Job Types that can access the dispatch menu
     "leo",
@@ -24,8 +24,12 @@ Config.ESXJobTypeMap = {
     bcso = "leo",
 
     ems = "ems",
-    bcso = "ems",
+    ambulance = "ems",
 }
+
+exports("getESXJobTypeMap", function()
+    return Config.ESXJobTypeMap
+end)
 
 Config.DefaultAlertsDelay = 5 -- Delay between each default alert, prevent spamming
 Config.DefaultAlerts = {
@@ -39,7 +43,7 @@ Config.DefaultAlerts = {
 Config.MinOffset = 1
 Config.MaxOffset = 120
 
-Config.PhoneRequired = false -- Set true if only can use 911/311 command when got a phone on inventory.
+Config.PhoneRequired = true -- Set true if only can use 911/311 command when got a phone on inventory.
 Config.PhoneItems = { -- Add the entire list of your phone items.
     "phone",
 }
@@ -154,6 +158,16 @@ Config.Blips = {
         offset = false,
         flash = true
     },
+    ['officerbackup'] = {
+        radius = 15.0,
+        sprite = 526,
+        color = 1,
+        scale = 1.5,
+        length = 2,
+        sound = 'panicbutton',
+        offset = false,
+        flash = true
+    },
     ['officerdistress'] = {
         radius = 15.0,
         sprite = 526,
@@ -171,6 +185,17 @@ Config.Blips = {
         scale = 1.5,
         length = 2,
         sound = 'panicbutton',
+        offset = false,
+        flash = false
+    },
+    ['hunting'] = {
+        radius = 0,
+        sprite = 141,
+        color = 2,
+        scale = 1.5,
+        length = 2,
+        sound = 'Lose_1st',
+        sound2 = 'GTAO_FM_Events_Soundset',
         offset = false,
         flash = false
     },

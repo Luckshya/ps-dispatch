@@ -1,13 +1,13 @@
 <script>
-  import { onMount } from 'svelte';
-  import { PLAYER, Locale, DISPATCH_MENU, DISPATCH_MENUS, DISPATCH_MUTED, DISPATCH_DISABLED } from '@store/stores';
+  import { PLAYER, Locale, DISPATCH_MENU, DISPATCH_MUTED, DISPATCH_DISABLED, IS_RIGHT_MARGIN, processedDispatchMenu } from '@store/stores';
   import { fly, slide } from 'svelte/transition';
 	import { timeAgo } from '@utils/timeAgo'
 	import { SendNUI } from '@utils/SendNUI'
-
+  
   let activeCallId = null;
   let additionalUnitsVisible = {};
-
+  $IS_RIGHT_MARGIN = localStorage.getItem('IsRightMargin') === 'true';
+  
   function toggleDispatch(id) {
     if (activeCallId === id) {
       activeCallId = null;
@@ -30,10 +30,20 @@
   }
 
   function getAdditionalUnitsCount(dispatch) {
-    // console.log(dispatch.units)
     const maxVisibleUnits = 3;
     const additionalUnits = dispatch.units.length - maxVisibleUnits;
     return Math.max(0, additionalUnits);
+  }
+
+  function toggleMargin() {
+    if ($IS_RIGHT_MARGIN) {
+      localStorage.setItem('IsRightMargin', 'false');
+    } else {
+      localStorage.setItem('IsRightMargin', 'true');
+    }
+  
+    $IS_RIGHT_MARGIN = localStorage.getItem('IsRightMargin') === 'true';
+
   }
 
   function toggleMute() {
@@ -54,7 +64,6 @@
       { icon: 'fas fa-comment', label: 'Information', value: dispatch.information },
       { icon: 'fas fa-map-location-dot', label: 'Street', value: dispatch.street },
       { icon: 'fas fa-user', label: 'Gender', value: dispatch.gender },
-      { icon: 'fas fa-user-group', label: 'Units', value: dispatch.units.length },
       { icon: 'fas fa-gun', label: 'Automatic Gun Fire', value: dispatch.automaticGunFire },
       { icon: 'fas fa-gun', label: 'Weapon', value: dispatch.weapon },
       { icon: 'fas fa-car', label: 'Vehicle', value: dispatch.vehicle },
@@ -63,16 +72,18 @@
       { icon: 'fas fa-car', label: 'Class', value: dispatch.class },
       { icon: 'fas fa-door-open', label: 'Doors', value: dispatch.doors },
       { icon: 'fas fa-compass', label: 'Heading', value: dispatch.heading },
+      { icon: 'fas fa-user-group', label: 'Units', value: dispatch.units.length },
     ];
   }
-
 </script>
 
-<div class="w-screen h-screen flex flex-row items-center justify-end" transition:fly={{ x: 400 }}>
+<div class="w-screen h-screen flex items-center justify-end { $IS_RIGHT_MARGIN ? 'flex-row' : 'flex-row-reverse' } " transition:fly="{{ x: $IS_RIGHT_MARGIN ? 400 : -400 }}">
   <!-- CONTROLS -->
-  <div class="w-[3.2vh] h-[85%] mr-[1vh] flex flex-col gap-[1vh]">
+  <div class="w-[3.2vh] h-[85%] flex flex-col gap-[1vh]" class:ml-[1vh]={!$IS_RIGHT_MARGIN} class:mr-[1vh]={$IS_RIGHT_MARGIN}>
+
     <!-- REFRESH ALERTS -->
     <button class="w-full h-[3vh] flex items-center justify-center bg-primary hover:bg-secondary"
+
       on:click={() => {
         SendNUI("refreshAlerts");
       }}
@@ -97,13 +108,21 @@
         SendNUI("clearBlips");
       }}
     >
-      <i class="fas fa-ban text-[1.5vh]"></i>
+    <i class="fas fa-ban text-[1.5vh]"></i>
+
+    </button>
+    <!-- Toggle Margin -->
+    <button class="w-full h-[3vh] flex items-center justify-center bg-primary hover:bg-secondary"
+      on:click={toggleMargin}
+    >
+    <i class="fas fa-{$IS_RIGHT_MARGIN ? "hand-point-left" : "hand-point-right"} text-[1.5vh]"></i>
+
     </button>
   </div>
   <!-- MENU -->
-  <div class="w-[25%] h-[90%] mr-[4vh] overflow-auto pr-[0.5vh]">
+  <div class="w-[25%] h-[97%] overflow-auto pr-[0.5vh]" class:ml-[2vh]={!$IS_RIGHT_MARGIN} class:mr-[2vh]={$IS_RIGHT_MARGIN}>
     {#if $DISPATCH_MENU}
-    {#each $DISPATCH_MENU.filter(dispatch => dispatch.message && dispatch.jobs.includes($PLAYER.job.type)).slice().reverse() as dispatch}
+    {#each $processedDispatchMenu as dispatch}
     <button class="w-full h-fit mb-[1vh] font-medium {dispatch.priority == 1 ? 'bg-priority_secondary' : 'bg-secondary'}" on:click={() => toggleDispatch(dispatch.id)}>
         <div class="flex items-center gap-[1vh] p-[1vh] text-[1.5vh] {dispatch.priority == 1 ? " bg-priority_primary" : " bg-primary"}">
             <p class="px-[2vh] py-[0.2vh] rounded-full bg-accent_green">

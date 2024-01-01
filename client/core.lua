@@ -7,8 +7,27 @@ Functions = {}
 
 -- QBCore
 Functions.QBCore = {}
+Functions.QBCore.UpdateCachedPlayerData = function()
+    local playerInfo = Functions.QBCore.GetPlayerData()
+    PlayerData = {
+        charinfo = {
+            firstname = playerInfo.charinfo.firstname,
+            lastname = playerInfo.charinfo.lastname
+        },
+        metadata = {
+            callsign = playerInfo.metadata.callsign
+        },
+        citizenid = playerInfo.citizenid,
+        job = {
+            type = playerInfo.job.type,
+            name = playerInfo.job.name,
+            label = playerInfo.job.label
+        },
+    }
+
+    return PlayerData
+end
 Functions.QBCore.GetCachedPlayerData = function()
-    if not PlayerData.citizenid then return Core.Functions.GetPlayerData() end
     return PlayerData
 end
 Functions.QBCore.GetPlayerData = function()
@@ -51,6 +70,27 @@ end
 
 -- ESX
 Functions.ESX = {}
+Functions.ESX.UpdateCachedPlayerData = function()
+    local playerInfo = Functions.ESX.GetPlayerData()
+    PlayerData = {
+        charinfo = {
+            firstname = playerInfo.charinfo.firstname,
+            lastname = playerInfo.charinfo.lastname
+        },
+        metadata = {
+            callsign = playerInfo.metadata.callsign
+        },
+        citizenid = playerInfo.citizenid,
+        job = {
+            type = playerInfo.job.type,
+            name = playerInfo.job.name,
+            label = playerInfo.job.label
+        },
+    }
+
+    return PlayerData
+end
+
 Functions.ESX.GetPlayerData = function()
     local playerData = Core.PlayerData
     if playerData then
@@ -112,13 +152,12 @@ end
 
 AddEventHandler('esx:setPlayerData', function(key, val, last)
     if GetInvokingResource() == 'es_extended' then
-        PlayerData[key] = val
         Core.PlayerData[key] = val
+        PlayerData = Functions.Core.UpdateCachedPlayerData()
     end
 end)
 
 RegisterNetEvent('esx:playerLoaded', function(xPlayer)
-    PlayerData = xPlayer
     Core.PlayerData = xPlayer
 
     Functions.ESX.LoadPlayerName()
@@ -133,7 +172,6 @@ RegisterNetEvent('esx:onPlayerLogout', function()
 end)
 
 RegisterNetEvent('esx:setJob', function(job)
-    PlayerData.job = job
     Core.PlayerData.job = job
 
     setupDispatch()

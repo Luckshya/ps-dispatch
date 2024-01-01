@@ -21,9 +21,8 @@ function GetIsHandcuffed()
 end
 
 function IsOnDuty()
-    PlayerData = Functions.Core.GetPlayerData()
     if Config.OnDutyOnly then
-        if Functions.Core.GetOnDuty(PlayerData) then
+        if Functions.Core.GetOnDuty(Functions.Core.GetPlayerData()) then
             return true
         else
             return false

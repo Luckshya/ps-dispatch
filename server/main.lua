@@ -1,50 +1,73 @@
 local calls = {}
-local recentCalls = {}
+local callCount = 0
+local callIds = {}
 
 -- Functions
 exports('GetDispatchCalls', function()
     return calls
 end)
 
-function GetRecentDispatchCalls() return recentCalls end
-exports('GetRecentDispatchCalls', GetRecentDispatchCalls)
-
 -- Events
 RegisterServerEvent('ps-dispatch:server:notify', function(data)
-    data.id = #calls + 1
+    callCount = callCount + 1
+    data.callId = callCount
+    data.id = callCount
+    data.source = source
     data.time = os.time() * 1000
     data.units = {}
     data.responses = {}
-    calls[#calls + 1] = data
 
-    local recentSize = #recentCalls
-
-    if recentSize >= Config.RecentCallsSize then
-        table.remove(recentCalls, 1)
+    if #callIds >= Config.MaxCallList then
+        calls[callIds[1]] = nil
+        table.remove(callIds, 1)
     end
 
-    table.insert(recentCalls, data)
+    calls[callCount] = data
 
     TriggerClientEvent('ps-dispatch:client:notify', -1, data)
 end)
 
-RegisterServerEvent('ps-dispatch:server:attach', function(id, player)
-    for i=1, #calls[id]['units'] do
-        if calls[id]['units'][i]['citizenid'] == player.citizenid then return end
-    end
+RegisterServerEvent('ps-dispatch:server:attach', function(id, player, cb)
+    if not calls[id] then return end
 
+    for j = 1, #calls[id]['units'] do
+        if calls[id]['units'][j]['citizenid'] == player.citizenid then
+            return
+        end
+    end
+    
     calls[id]['units'][#calls[id]['units'] + 1] = player
+    if cb then cb('ok') end
 end)
 
-RegisterServerEvent('ps-dispatch:server:detach', function(id, player)
+RegisterServerEvent('ps-dispatch:server:detach', function(id, player, cb)
     if not calls[id] then return end
-    if not calls[id]['units'] then return end
-    if (#calls[id]['units'] or 0) > 0 then
-        for i = #calls[id]['units'], 1, -1 do
-            if calls[id]['units'][i]['citizenid'] == player.citizenid then
-                table.remove(calls[id]['units'], i)
-            end
+
+    for j = 1, #calls[id]['units'] do
+        if calls[id]['units'][j]['citizenid'] == player.citizenid then
+            table.remove(calls[id]['units'], j)
         end
+    end
+
+    if cb then cb('ok') end
+end)
+
+AddEventHandler("ps-dispatch:server:sendCallResponse", function(player, callid, message, time, cb)
+    local Player = Functions[Config.Core].GetPlayer(player)
+    local name = Functions[Config.Core].GetName(Player)
+    if calls[callid] then
+        calls[callid]['responses'][#calls[callid]['responses']+1] = {
+            name = name,
+            message = message,
+            time = time
+        }
+        local player = calls[callid]['source']
+        if GetPlayerPing(player) > 0 then
+            TriggerClientEvent('ps-dispatch:client:getCallResponse', player, message)
+        end
+        cb(true)
+    else
+        cb(false)
     end
 end)
 
@@ -71,9 +94,9 @@ lib.addCommand('911', {
 }, function(source, args, raw)
     local timeNow = os.time()
 
-    if timeNow - last911Used <= Config.Cooldown911 then
-        return Functions.Core.Notify(source, "Please wait before using it again", "error")
-    end
+    -- if timeNow - last911Used <= Config.Cooldown911 then
+    --     return Functions.Core.Notify(source, "Please wait before using it again", "error")
+    -- end
 
     last911Used = timeNow
 

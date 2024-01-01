@@ -12,7 +12,7 @@ Do not create issues on GitHub if you need help. Issues are for bug reporting an
 
 # Installation
 * Download ZIP
-* Make sure your [qb-core}(https://github.com/qbcore-framework/qb-core) is fully updated to the latest version.
+* Make sure your [qb-core](https://github.com/qbcore-framework/qb-core) is fully updated to the latest version.
 * Drag and drop resource into your server files
 * Start resource through server.cfg
 * Drag and drop sounds folder into interact-sound\client\html\sounds
@@ -20,6 +20,7 @@ Do not create issues on GitHub if you need help. Issues are for bug reporting an
 * Restart your server.
 
 # Preview
+<img src="https://github.com/Project-Sloth/ps-dispatch/assets/82112471/42f84fc1-a30a-441e-8e00-618a0dfde0f3" width="600">
 <img src="https://github.com/Project-Sloth/ps-dispatch/assets/82112471/4a3d44b9-1629-457b-ba0e-a77c617aa993" width="600">
 <img src="https://github.com/Project-Sloth/ps-dispatch/assets/82112471/7f4a7c76-f92d-4067-9fcb-7c78ee1b067c" width="600">
 <img src="https://github.com/Project-Sloth/ps-dispatch/assets/82112471/01569df8-d5f6-417b-bcd4-422551eaa840" width="600">
@@ -38,65 +39,45 @@ Do not create issues on GitHub if you need help. Issues are for bug reporting an
 |nl      |Dutch      |
 |cs      |Czech      |
 |pt-br      |Brazilian Portuguese      |
+|es      |Spanish      |
 
 # Preset Alert Exports.
 
 ```lua
-- exports['ps-dispatch']:VehicleShooting(vehicle)
-
-- exports['ps-dispatch']:Shooting()
-
-- exports['ps-dispatch']:OfficerDown()
-
-- exports['ps-dispatch']:SpeedingVehicle(vehicle)
-
-- exports['ps-dispatch']:Fight()
-
-- exports['ps-dispatch']:InjuriedPerson()
-
-- exports['ps-dispatch']:DeceasedPerson()
-
-- exports['ps-dispatch']:StoreRobbery(camId)
-
-- exports['ps-dispatch']:FleecaBankRobbery(camId)
-
-- exports['ps-dispatch']:PaletoBankRobbery(camId)
-
-- exports['ps-dispatch']:PacificBankRobbery(camId)
-
-- exports['ps-dispatch']:PrisonBreak()
-
-- exports['ps-dispatch']:VangelicoRobbery(camId)
-
-- exports['ps-dispatch']:HouseRobbery()
-
-- exports['ps-dispatch']:DrugSale()
-
 - exports['ps-dispatch']:ArtGalleryRobbery()
-
-- exports['ps-dispatch']:HumaneRobery()
-
-- exports['ps-dispatch']:TrainRobbery()
-
-- exports['ps-dispatch']:VanRobbery()
-
-- exports['ps-dispatch']:UndergroundRobbery()
-
-- exports['ps-dispatch']:DrugBoatRobbery()
-
-- exports['ps-dispatch']:UnionRobbery()
-
-- exports['ps-dispatch']:YachtHeist()
-
 - exports['ps-dispatch']:CarBoosting(vehicle)
-
 - exports['ps-dispatch']:CarJacking(vehicle)
-
-- exports['ps-dispatch']:VehicleTheft(vehicle)
-
-- exports['ps-dispatch']:SuspiciousActivity()
-
+- exports['ps-dispatch']:CustomAlert()
+- exports['ps-dispatch']:DeceasedPerson()
+- exports['ps-dispatch']:DrugBoatRobbery()
+- exports['ps-dispatch']:DrugSale()
+- exports['ps-dispatch']:EmsDown()
+- exports['ps-dispatch']:Explosion()
+- exports['ps-dispatch']:Fight()
+- exports['ps-dispatch']:FleecaBankRobbery(camId)
+- exports['ps-dispatch']:HouseRobbery()
+- exports['ps-dispatch']:HumaneRobery()
+- exports['ps-dispatch']:Hunting()
+- exports['ps-dispatch']:InjuriedPerson()
+- exports['ps-dispatch']:OfficerDown()
+- exports['ps-dispatch']:OfficerBackup()
+- exports['ps-dispatch']:OfficerInDistress()
+- exports['ps-dispatch']:PacificBankRobbery(camId)
+- exports['ps-dispatch']:PaletoBankRobbery(camId)
+- exports['ps-dispatch']:PrisonBreak()
+- exports['ps-dispatch']:Shooting()
 - exports['ps-dispatch']:SignRobbery()
+- exports['ps-dispatch']:SpeedingVehicle(vehicle)
+- exports['ps-dispatch']:StoreRobbery(camId)
+- exports['ps-dispatch']:SuspiciousActivity()
+- exports['ps-dispatch']:TrainRobbery()
+- exports['ps-dispatch']:UndergroundRobbery()
+- exports['ps-dispatch']:UnionRobbery()
+- exports['ps-dispatch']:VangelicoRobbery(camId)
+- exports['ps-dispatch']:VanRobbery()
+- exports['ps-dispatch']:VehicleShooting(vehicle)
+- exports['ps-dispatch']:VehicleTheft(vehicle)
+- exports['ps-dispatch']:YachtHeist()
 ```
 # FAQ
 * There are no calls showing on dispatch or mdt list.
@@ -106,6 +87,9 @@ Do not create issues on GitHub if you need help. Issues are for bug reporting an
 
   - Make sure that you're using the correct job type as leo and make sure your [qb-core](https://github.com/qbcore-framework/qb-core) is fully updated to the latest version.
   - On shared/config.lua make set Config.Debug = true to test calls as police officer.(ONLY to be used as testing, make sure to disable on live production)
+
+* How to change colors of the calls? 
+  - Priority 1 is red and priority 2 is normal on the config. 
 
 # Credits
 * [OK1ez](https://github.com/OK1ez)
