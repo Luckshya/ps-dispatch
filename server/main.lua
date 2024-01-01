@@ -94,9 +94,9 @@ lib.addCommand('911', {
 }, function(source, args, raw)
     local timeNow = os.time()
 
-    -- if timeNow - last911Used <= Config.Cooldown911 then
-    --     return Functions.Core.Notify(source, "Please wait before using it again", "error")
-    -- end
+    if timeNow - last911Used <= Config.Cooldown911 then
+        return Functions.Core.Notify(source, "Please wait before using it again", "error")
+    end
 
     last911Used = timeNow
 

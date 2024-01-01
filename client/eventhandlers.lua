@@ -26,10 +26,23 @@ local function isPedAWitness(witnesses, ped)
     return false
 end
 
+---@param ped number | Ped ID to check
+---@return boolean | Returns true if the ped is holding a whitelisted gun
+local function BlacklistedWeapon(ped)
+	for i = 1, #Config.WeaponWhitelist do
+		local weaponHash = GetHashKey(Config.WeaponWhitelist[i])
+		if GetSelectedPedWeapon(ped) == weaponHash then
+			return true -- Is a whitelisted weapon
+		end
+	end
+	return false -- Is not a whitelisted weapon
+end
+
 AddEventHandler('CEventGunShot', function(witnesses, ped)
     if IsPedCurrentWeaponSilenced(cache.ped) then return end
     if inNoDispatchZone then return end
-
+    if BlacklistedWeapon(cache.ped) then return end
+        
     WaitTimer('Shooting', function()
         if cache.ped ~= ped then return end
 
@@ -80,11 +93,17 @@ AddEventHandler('CEventShockingCarAlarm', function(_, ped)
     end)
 end)
 
+AddEventHandler('CEventExplosionHeard', function(witnesses, ped)
+    if witnesses and not isPedAWitness(witnesses, ped) then return end
+    WaitTimer('Explosion', function()
+        exports['ps-dispatch']:Explosion()
+    end)
+end)
+
 AddEventHandler('gameEventTriggered', function(name, args)
     if name ~= 'CEventNetworkEntityDamage' then return end
     local victim = args[1]
     local isDead = args[6] == 1
-
     WaitTimer('PlayerDowned', function()
         if not victim or victim ~= cache.ped then return end
         if not isDead then return end
@@ -120,6 +139,12 @@ for i = 1, #SpeedingEvents do
             end
             if cache.ped ~= ped then return end
 
+            if PlayerData.job.type == 'leo' then
+                if not Config.Debug then
+                    return
+                end
+            end
+            
             if GetEntitySpeed(cache.vehicle) * 3.6 < (80 + math.random(0, 20)) then return end
 
             if cache.ped ~= GetPedInVehicleSeat(cache.vehicle, -1) then return end

@@ -4,6 +4,7 @@ Config.Core = "QBCore"
 Config.Cooldown911 = 60
 Config.Cooldown311 = 60
 
+Config.ShortCalls = false -- Dispatch notifications are sent containing only the alert name, omitting additional details. For more information, the dispatch menu can be accessed.  
 Config.Debug = false -- Enables debug and send alerts when leo break the law.
 
 Config.RespondKeybind = 'E'
@@ -37,7 +38,8 @@ Config.DefaultAlerts = {
     Shooting = true,
     Autotheft = true,
     Melee = true,
-    PlayerDowned = true
+    PlayerDowned = true,
+    Explosion = true
 }
 
 Config.MinOffset = 1
@@ -59,6 +61,25 @@ Config.Locations = {
         [1] = {label = "Ammunation 1", coords = vector3(13.53, -1097.92, 29.8), length = 14.0, width = 5.0, heading = 70, minZ = 28.8, maxZ = 32.8},
         [2] = {label = "Ammunation 2", coords = vector3(821.96, -2163.09, 29.62), length = 14.0, width = 5.0, heading = 270, minZ = 28.62, maxZ = 32.62},
     },
+}
+
+-- Whitelist Guns that do not send shooting alerts
+Config.WeaponWhitelist = {
+    'WEAPON_GRENADE',
+    'WEAPON_BZGAS',
+    'WEAPON_MOLOTOV',
+    'WEAPON_STICKYBOMB',
+    'WEAPON_PROXMINE',
+    'WEAPON_SNOWBALL',
+    'WEAPON_PIPEBOMB',
+    'WEAPON_BALL',
+    'WEAPON_SMOKEGRENADE',
+    'WEAPON_FLARE',
+    'WEAPON_PETROLCAN',
+    'WEAPON_FIREEXTINGUISHER',
+    'WEAPON_HAZARDCAN',
+    'WEAPON_RAYCARBINE',
+    'WEAPON_STUNGUN'
 }
 
 Config.Blips = {
@@ -419,14 +440,14 @@ Config.Blips = {
         flash = false
     },
     ['explosion'] = {
-        radius = 0,
+        radius = 75.0,
         sprite = 436,
         color = 1,
         scale = 1.5,
         length = 2,
         sound = 'Lose_1st',
         sound2 = 'GTAO_FM_Events_Soundset',
-        offset = false,
+        offset = true,
         flash = false
     }
 }
