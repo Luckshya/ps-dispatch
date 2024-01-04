@@ -20,17 +20,18 @@ Do not create issues on GitHub if you need help. Issues are for bug reporting an
 * Restart your server.
 
 # Preview
-### [Config.ShortCalls](https://github.com/Project-Sloth/ps-dispatch/blob/40ffc466ec7ffa14faaf40a68e8b3a9a92c72db6/shared/config.lua#L3C1-L3C18)
-Dispatch notifications are sent containing only the alert name, omitting additional details. For more information, the dispatch menu can be accessed.   
+## Short Notifications
+Dispatch notifications are sent containing only the alert name, omitting additional details to help over populated servers. For more information, the dispatch menu can be accessed. Can be configured on [Config.ShortCalls](https://github.com/Project-Sloth/ps-dispatch/blob/40ffc466ec7ffa14faaf40a68e8b3a9a92c72db6/shared/config.lua#L3C1-L3C18), false by default.
+
 <img src="https://github.com/Project-Sloth/ps-dispatch/assets/82112471/7671b361-88aa-42f6-9cd9-32d0fd94881e" width="600">
 
-### Long Notifications
+## Long Notifications
 <img src="https://github.com/Project-Sloth/ps-dispatch/assets/82112471/42f84fc1-a30a-441e-8e00-618a0dfde0f3" width="600">
 <img src="https://github.com/Project-Sloth/ps-dispatch/assets/82112471/4a3d44b9-1629-457b-ba0e-a77c617aa993" width="600">
 <img src="https://github.com/Project-Sloth/ps-dispatch/assets/82112471/7f4a7c76-f92d-4067-9fcb-7c78ee1b067c" width="600">
 <img src="https://github.com/Project-Sloth/ps-dispatch/assets/82112471/01569df8-d5f6-417b-bcd4-422551eaa840" width="600">
 
-### Dispatch Menu
+## Dispatch Menu
 <img src="https://github.com/Project-Sloth/ps-dispatch/assets/82112471/f2b111b2-60c3-428e-b12a-1bfed617f09e" width="800">
 
 # Change Language.
@@ -96,7 +97,13 @@ Dispatch notifications are sent containing only the alert name, omitting additio
   - On shared/config.lua make set Config.Debug = true to test calls as police officer.(ONLY to be used as testing, make sure to disable on live production)
 
 * How to change colors of the calls? 
-  - Priority 1 is red and priority 2 is normal on the config. 
+  - Priority 1 is red and priority 2 is normal on the config.
+
+* To increase the time that calls are shown on the screen, do the following:
+  - Find the "alerts.lua" file in the client folder.
+  - Open this file with a text editor or a development tool like Visual Studio Code.
+  - Look for the code "alertTime = nil".
+  - Replace "nil" with the number of seconds you want the calls to display. For example, setting "alertTime = 25" means calls will be shown for 25 seconds.
 
 # Credits
 * [OK1ez](https://github.com/OK1ez)
