@@ -82,9 +82,9 @@ Functions.ESX.UpdateCachedPlayerData = function()
         },
         citizenid = playerInfo.citizenid,
         job = {
-            type = playerInfo.job.type,
-            name = playerInfo.job.name,
-            label = playerInfo.job.label
+            type = playerInfo.job?.type,
+            name = playerInfo.job?.name,
+            label = playerInfo.job?.label
         },
     }
 
