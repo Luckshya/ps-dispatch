@@ -12,7 +12,8 @@ Functions.QBCore.UpdateCachedPlayerData = function()
     PlayerData = {
         charinfo = {
             firstname = playerInfo.charinfo.firstname,
-            lastname = playerInfo.charinfo.lastname
+            lastname = playerInfo.charinfo.lastname,
+            gender = playerInfo.charinfo.gender,
         },
         metadata = {
             callsign = playerInfo.metadata.callsign
@@ -34,7 +35,7 @@ Functions.QBCore.GetPlayerData = function()
     return Core.Functions.GetPlayerData()
 end
 Functions.QBCore.GetGender = function(playerData)
-    return playerData.charinfo.gender == 1 and 'Female' or 'Male'
+    return playerData.charinfo.gender == 1 and locale('female') or locale('male')
 end
 Functions.QBCore.GetOnDuty = function(playerData)
     return playerData.job.onduty
@@ -65,7 +66,7 @@ Functions.QBCore.GetCallSign = function(playerData)
     return playerData.metadata["callsign"]
 end
 Functions.QBCore.IsHandcuffed = function()
-    return exports['qb-policejob']:IsHandcuffed()
+    return Core.Functions.GetPlayerData()?.metadata?.ishandcuffed
 end
 
 -- ESX
@@ -86,6 +87,7 @@ Functions.ESX.UpdateCachedPlayerData = function()
             name = playerInfo.job?.name,
             label = playerInfo.job?.label
         },
+        sex = playerInfo.sex,
     }
 
     return PlayerData
@@ -111,7 +113,7 @@ Functions.ESX.GetCachedPlayerData = function()
     return Functions.ESX.GetPlayerData()
 end
 Functions.ESX.GetGender = function(playerData)
-    return playerData.sex == "m" and 'Male' or 'Female'
+    return playerData.sex == "m" and locale('male') or locale('female')
 end
 Functions.ESX.GetOnDuty = function()
     return true

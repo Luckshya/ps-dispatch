@@ -247,7 +247,9 @@ RegisterNetEvent('ps-dispatch:client:getCallResponse', function(message)
 end)
 
 RegisterNetEvent('ps-dispatch:client:notify', function(data, source)
-    local timer = Config.AlertTime * 1000
+    if data.alertTime == nil then data.alertTime = Config.AlertTime end
+    local timer = data.alertTime * 1000
+    
     if alertsDisabled then return end
     if not isJobValid(data.jobs) then return end
     if not IsOnDuty() then return end
